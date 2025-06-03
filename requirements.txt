@@ -1,0 +1,11 @@
+gymnasium
+numpy
+torch
+stable-baselines3
+wandb
+pyyaml
+tensorboard
+ale-py
+opencv-python 
+gym[atari]
+autorom[accept-rom-license]

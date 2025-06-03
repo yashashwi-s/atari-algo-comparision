@@ -1,0 +1,71 @@
+import os
+import torch
+from stable_baselines3 import DQN
+from stable_baselines3.common.vec_env import VecFrameStack, DummyVecEnv
+import wandb
+
+from utils import (
+    make_env, 
+    unzip_file, 
+    load_config, 
+    setup_wandb
+)
+
+def test_dqn(config_path):
+    config = load_config(config_path)
+    
+    use_wandb = setup_wandb(config, is_training=False)
+    
+    if config['pretrained']:
+        unzip_file(config['saved_model_path'], config['unzip_file_path'])
+    
+    env = DummyVecEnv([make_env(config['env_id'], seed=config['seed'], render_mode='human')])
+    env = VecFrameStack(env, n_stack=config['n_stack'])
+    
+    model = DQN(
+        policy=config['policy'],
+        env=env,
+        verbose=config['verbose']
+    )
+    
+    if config['pretrained']:
+        model.policy.load_state_dict(
+            torch.load(os.path.join(config['unzip_file_path'], "policy.pth"))
+        )
+        model.policy.optimizer.load_state_dict(
+            torch.load(os.path.join(config['unzip_file_path'], "policy.optimizer.pth"))
+        )
+    else:
+        model = DQN.load(
+            config['saved_model_path'][:-4], 
+            env=env
+        )
+    
+    for episode in range(config['test_episodes']):
+        obs = env.reset()
+        done = False
+        episode_reward = 0
+        
+        while not done:
+            action, _ = model.predict(obs)
+            obs, reward, done, truncated, info = env.step(action)
+            episode_reward += reward[0]
+            env.render()
+            
+            done = done[0] or truncated[0]
+            
+        if use_wandb:
+            wandb.log({
+                'test_episode_reward': episode_reward, 
+                'test_episode': episode
+            })
+            
+        print(f"Episode {episode+1}/{config['test_episodes']}, Reward: {episode_reward}")
+    
+    env.close()
+    if use_wandb:
+        wandb.finish()
+
+
+if __name__ == "__main__":
+    test_dqn("configs/dqn_config.yaml") 
