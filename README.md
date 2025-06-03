@@ -67,12 +67,25 @@ DQN converged at around 2M, the others at arounf 3-4M.
 
 The reason for this superior performance of dqn may be given to replay buffer, which the other on-policy algorithms lack. I also learnt that Breakout is a classical setting where DQN outperforms naturally so there is a bias to the current extent of study as well.
 
-### Testing the models on 100 episodes
-
-
-
 ### Another round of training (2M steps) of PPO with 5000 max timesteps
 
+The initial run was a shocker for me, even after training for so long the rewards were very poor. I increased the max timesteps and it worked like magic. I get ~35 on PPO at just 2M steps. 
 
+![image](https://github.com/user-attachments/assets/89161586-3d1b-4dac-bcc5-bd24d611d51b)
+
+## Testing the models across 100 episodes
+
+Testing the models the result is not so surprising after the above, I ran them both at max steps 5k and max steps 1k.
+
+Rewards (max, average)
+
+| Max timesteps | 2M PPO | 5M PPO | 5M DQN | 5M A2C |
+| ------------- | ------ | ------ | ------ | ------ |
+| 5000          | 18, 5.2 | 14, 3.2 | 19, 3.9 | 18, 4.3 |
+| 1000          | 8, 4.2 | 8, 5.1 | 10, 6.1 | 8, 4.26 |
+
+A big issue here was the max timesteps which I overlooked. One plan for future training can be to have a linear scheduler on the max timesteps, becoming strict as the algorithm learns.
+
+Hopefully this project might've tickled your RL brain like it did mine. Cheers!
 
 
